@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f1a2e"/>
+      <stop offset="0.5" stop-color="#0b1220"/>
+      <stop offset="1" stop-color="#04080f"/>
+    </linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1d8cf8"/>
+      <stop offset="1" stop-color="#06d6d6"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.2" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#1d8cf8" stop-opacity="0.15"/>
+      <stop offset="1" stop-color="#1d8cf8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  
+  <!-- Logo icon left -->
+  <g transform="translate(80, 195)">
+    <rect width="240" height="240" rx="52" fill="#0b1220" stroke="#1a2d4a" stroke-width="2"/>
+    <path d="M73 60h45q26 0 26 25 0 24-26 24H97v50H73z M97 81v29h17q10 0 10-14 0-15-10-15z" fill="url(#brand)"/>
+    <circle cx="174" cy="174" r="26" fill="#00e5a0"/>
+    <text x="174" y="185" font-size="32" text-anchor="middle" font-family="-apple-system, sans-serif" font-weight="700" fill="#000">$</text>
+  </g>
+  
+  <!-- Text right -->
+  <text x="380" y="270" font-size="84" font-family="-apple-system, sans-serif" font-weight="800" fill="#e8f0fb">PH Finance</text>
+  <text x="380" y="330" font-size="32" font-family="-apple-system, sans-serif" font-weight="500" fill="#06d6d6">Seu assessor financeiro pessoal</text>
+  
+  <!-- Subtext features -->
+  <text x="380" y="395" font-size="22" font-family="-apple-system, sans-serif" font-weight="400" fill="#3a5478">📊 Dashboard inteligente · 🧠 Plano de quitação</text>
+  <text x="380" y="425" font-size="22" font-family="-apple-system, sans-serif" font-weight="400" fill="#3a5478">💬 Assessor IA · 📈 Projeção de investimentos</text>
+  
+  <!-- Bottom CTA -->
+  <rect x="380" y="475" width="320" height="56" rx="28" fill="url(#brand)"/>
+  <text x="540" y="511" font-size="22" text-anchor="middle" font-family="-apple-system, sans-serif" font-weight="700" fill="#fff">📲 Instale como app no celular</text>
+  
+  <!-- Sample mini-card decorations right side -->
+  <g opacity="0.4" transform="translate(870, 130)">
+    <rect x="0" y="0" width="240" height="80" rx="12" fill="#0b1220" stroke="#253d5e"/>
+    <text x="20" y="32" font-size="12" font-family="-apple-system, sans-serif" font-weight="600" fill="#3a5478">RECEITA TOTAL</text>
+    <text x="20" y="62" font-size="22" font-family="-apple-system, sans-serif" font-weight="500" fill="#00e5a0">R$ 32.364</text>
+  </g>
+  <g opacity="0.4" transform="translate(870, 230)">
+    <rect x="0" y="0" width="240" height="80" rx="12" fill="#0b1220" stroke="#253d5e"/>
+    <text x="20" y="32" font-size="12" font-family="-apple-system, sans-serif" font-weight="600" fill="#3a5478">SALDO PROJETADO</text>
+    <text x="20" y="62" font-size="22" font-family="-apple-system, sans-serif" font-weight="500" fill="#ffca28">+R$ 2.845</text>
+  </g>
+  <g opacity="0.4" transform="translate(870, 330)">
+    <rect x="0" y="0" width="240" height="80" rx="12" fill="#0b1220" stroke="#253d5e"/>
+    <text x="20" y="32" font-size="12" font-family="-apple-system, sans-serif" font-weight="600" fill="#3a5478">META RESERVA</text>
+    <text x="20" y="62" font-size="22" font-family="-apple-system, sans-serif" font-weight="500" fill="#1d8cf8">71%</text>
+  </g>
+</svg>

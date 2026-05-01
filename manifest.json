@@ -1,0 +1,39 @@
+{
+  "name": "PH Finance - Assessor Financeiro Pessoal",
+  "short_name": "PH Finance",
+  "description": "Seu assessor financeiro pessoal para sair do vermelho e atingir suas metas",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#04080f",
+  "theme_color": "#0b1220",
+  "orientation": "portrait",
+  "scope": ".",
+  "icons": [
+    {
+      "src": "icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Adicionar Gasto",
+      "short_name": "+ Gasto",
+      "url": "./?action=add",
+      "icons": [{ "src": "icon-512.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Ver Plano",
+      "short_name": "Plano",
+      "url": "./?tab=plano",
+      "icons": [{ "src": "icon-512.svg", "sizes": "192x192" }]
+    }
+  ]
+}
