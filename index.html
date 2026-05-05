@@ -125,15 +125,36 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100dv
 .pane.act{display:block;animation:fadein .2s}
 
 /* OVERVIEW METRIC CARDS */
-.ov-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:13px}
+.ov-grid-lg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+.ov-grid-sm{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:13px}
+@media(max-width:600px){
+  .ov-grid-lg{gap:5px}
+  .ov-grid-sm{grid-template-columns:repeat(2,1fr);gap:5px}
+}
 .ov-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);padding:13px;
   position:relative;overflow:hidden}
+.ov-card.lg{padding:14px 13px 13px}
+.ov-card.sm{padding:10px 11px}
+.ov-card.sm .ov-ico{font-size:.95rem;margin-bottom:3px}
+.ov-card.sm .ov-lbl{font-size:.58rem;margin-bottom:2px;letter-spacing:.3px}
+.ov-card.sm .ov-val{font-size:1rem;line-height:1}
+.ov-card.sm .ov-sub{font-size:.58rem;margin-top:2px}
+@media(max-width:600px){
+  .ov-card.lg{padding:11px 10px}
+  .ov-card.lg .ov-val{font-size:1.05rem}
+  .ov-card.lg .ov-lbl{font-size:.58rem;letter-spacing:.3px}
+  .ov-card.lg .ov-sub{font-size:.58rem}
+  .ov-card.sm{padding:8px 9px}
+  .ov-card.sm .ov-val{font-size:.92rem}
+}
 .ov-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
 .ov-card.inc::before{background:linear-gradient(90deg,var(--green),var(--cyan))}
 .ov-card.exp::before{background:linear-gradient(90deg,var(--red),var(--orange))}
 .ov-card.bal::before{background:linear-gradient(90deg,var(--blue),var(--purple))}
 .ov-card.rsv::before{background:linear-gradient(90deg,var(--yellow),var(--green))}
 .ov-card.ovd::before{background:linear-gradient(90deg,var(--red),var(--pink))}
+.ov-card.paid-c::before{background:linear-gradient(90deg,var(--green),var(--cyan))}
+.ov-card.pend-c::before{background:linear-gradient(90deg,var(--yellow),var(--orange))}
 .ov-ico{font-size:1.15rem;margin-bottom:5px}
 .ov-lbl{font-size:.64rem;color:var(--muted);font-weight:600;text-transform:uppercase;
   letter-spacing:.4px;margin-bottom:3px}
@@ -536,7 +557,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100dv
     <div class="panes">
 
       <div class="pane act" id="pane-overview">
-        <div class="ov-grid" id="ovCards"></div>
+        <div id="ovCarryBanner"></div>
+        <div class="ov-grid-lg" id="ovCardsLg"></div>
+        <div class="ov-grid-sm" id="ovCardsSm"></div>
         <div id="pdonutEl"></div>
         <div id="insightsEl"></div>
         <div class="shdr"><div class="stitle">📊 Orçamento Variável</div></div>
@@ -561,6 +584,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100dv
       </div>
 
       <div class="pane" id="pane-plano">
+        <div id="planoSummaryEl"></div>
         <div class="strat" id="stratBox"></div>
         <div class="shdr"><div class="stitle">Ordem de Pagamento</div></div>
         <div id="planList"></div>
@@ -712,6 +736,60 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100dv
   </div>
 </div>
 
+<!-- INCOME SOURCES MODAL -->
+<div class="overlay" id="incomeModal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-ttl">💼 Fontes de Renda<button class="close-btn" onclick="closeIncomeModal()">✕</button></div>
+
+    <!-- LIST VIEW -->
+    <div id="incomeListWrap">
+      <div id="incomeList"></div>
+      <div class="mbtns" style="margin-top:13px">
+        <button class="btn btng" onclick="closeIncomeModal()">Fechar</button>
+      </div>
+    </div>
+
+    <!-- FORM VIEW (add/edit) -->
+    <div id="incomeForm" style="display:none">
+      <div style="font-size:.82rem;font-weight:700;color:var(--bright);margin-bottom:10px" id="incForm-ttl">+ Nova fonte</div>
+      <div class="fg"><label>Nome</label><input type="text" id="incForm-name" placeholder="Ex: Salário, Aluguel recebido, Freela..."></div>
+      <div class="fg"><label>Valor (R$)</label><input type="number" id="incForm-amount" step="0.01" inputmode="decimal" placeholder="0,00"></div>
+      <div class="fg"><label>Ícone (emoji)</label><input type="text" id="incForm-icon" maxlength="3" placeholder="💼" style="width:80px"></div>
+      <div class="fg"><label>Tipo</label>
+        <select id="incForm-type" onchange="toggleIncomeFields()">
+          <option value="recurring">🔁 Mensal recorrente (todo mês)</option>
+          <option value="oneoff">📅 Pontual (apenas um mês)</option>
+        </select>
+      </div>
+      <div class="fg" id="incForm-startRow"><label>Começa a partir de</label>
+        <select id="incForm-startMonth" style="width:100%">
+          <option value="2026-1">Janeiro 2026</option><option value="2026-2">Fevereiro 2026</option>
+          <option value="2026-3">Março 2026</option><option value="2026-4">Abril 2026</option>
+          <option value="2026-5">Maio 2026</option><option value="2026-6">Junho 2026</option>
+          <option value="2026-7">Julho 2026</option><option value="2026-8">Agosto 2026</option>
+          <option value="2026-9">Setembro 2026</option><option value="2026-10">Outubro 2026</option>
+          <option value="2026-11">Novembro 2026</option><option value="2026-12">Dezembro 2026</option>
+          <option value="2027-1">Janeiro 2027</option>
+        </select>
+      </div>
+      <div class="fg" id="incForm-monthRow" style="display:none"><label>Mês específico</label>
+        <select id="incForm-month" style="width:100%">
+          <option value="2026-4">Abril 2026</option><option value="2026-5">Maio 2026</option>
+          <option value="2026-6">Junho 2026</option><option value="2026-7">Julho 2026</option>
+          <option value="2026-8">Agosto 2026</option><option value="2026-9">Setembro 2026</option>
+          <option value="2026-10">Outubro 2026</option><option value="2026-11">Novembro 2026</option>
+          <option value="2026-12">Dezembro 2026</option><option value="2027-1">Janeiro 2027</option>
+        </select>
+      </div>
+      <div class="mbtns three">
+        <button class="btn btnd" id="incForm-deleteBtn" onclick="deleteIncomeSource()" style="display:none">🗑 Excluir</button>
+        <button class="btn btng" onclick="backToIncomeList()">← Voltar</button>
+        <button class="btn btnp" onclick="saveIncomeSource()">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- RENEGOTIATE MODAL -->
 <div class="overlay" id="renegModal">
   <div class="modal">
@@ -743,10 +821,10 @@ const DEFAULT_BUDGETS = {
   alimentacao: { label:'🍽 Alimentação',  limit:1500, color:'#00e5a0' },
 };
 
-// Overdue items - now structured as bills with IDs so they can be marked paid
+// Overdue items - use shared IDs with defaultFixed where applicable, so paying syncs
 const OVD_DATA = [
-  {id:'ovd_carro_abr', name:'Carro (Abril)',         amount:2150, ico:'🚗', cat:'fixo'},
-  {id:'ovd_picpay_1',  name:'Emp. PicPay (1ª parc.)',amount:770,  ico:'💸', cat:'emprestimo'},
+  {id:'ca_2026_4', name:'Carro (Abril)',         amount:2150, ico:'🚗', cat:'fixo'},
+  {id:'pe_2026_4', name:'Emp. PicPay (1ª parc.)',amount:770,  ico:'💸', cat:'emprestimo'},
   {id:'ovd_cnpj_1',    name:'CNPJ atrasado 1/4',     amount:1700, ico:'📄', cat:'fixo'},
   {id:'ovd_cnpj_2',    name:'CNPJ atrasado 2/4',     amount:1700, ico:'📄', cat:'fixo'},
   {id:'ovd_cnpj_3',    name:'CNPJ atrasado 3/4',     amount:1700, ico:'📄', cat:'fixo'},
@@ -782,8 +860,9 @@ function defaultFixed(y, m) {
   const i = (y-2026)*12 + (m-5);
   const d = new Date(y, m-1, 1);
   const sh = d.toLocaleDateString('pt-BR',{month:'short',year:'2-digit'});
-  const carro = i<=44 ? 2150 : 0;
-  const pp    = i<=10 ? 770 : 0;
+  const isAprilOverdue = (y === 2026 && m === 4);  // April: carro+picpay live in OVD_DATA, skip here
+  const carro = (i<=44 && !isAprilOverdue) ? 2150 : 0;
+  const pp    = (i<=10 && !isAprilOverdue) ? 770 : 0;
   const nay   = (i>=1 && i<=3) ? 3333 : 0;
   const arr = [];
   arr.push({id:'al_'+y+'_'+m, name:'Aluguel + Cond.', amount:3650, due:'07/'+sh, dd:7, cat:'fixo', ico:'🏠', pri:1});
@@ -837,13 +916,15 @@ let S = {
   customCards: {}, extras: {}, budgets: {}, budgetLimits: {},
   receitas: {},   // mKey -> [{id,name,amount,ts}]
   renegociated: {},  // billId -> {newAmount, originalAmount, ts}
+  incomeSources: [],  // [{id, name, amount, type:'recurring'|'oneoff', month?, startMonth?, endMonth?, icon}]
   assistHist: [],
-  bmCurrent: null, editingId: null, editingType: null, editingBudgetCat: null
+  bmCurrent: null, editingId: null, editingType: null, editingBudgetCat: null,
+  editingIncomeId: null
 };
 
 function load() {
   try {
-    const d = JSON.parse(localStorage.getItem('phf10') || '{}');
+    const d = JSON.parse(localStorage.getItem('phf11') || localStorage.getItem('phf10') || '{}');
     if(d.y) S.y = d.y;
     if(d.m) S.m = d.m;
     if(d.paid) S.paid = d.paid;
@@ -855,15 +936,17 @@ function load() {
     if(d.budgetLimits) S.budgetLimits = d.budgetLimits;
     if(d.receitas) S.receitas = d.receitas;
     if(d.renegociated) S.renegociated = d.renegociated;
+    if(d.incomeSources) S.incomeSources = d.incomeSources;
     if(d.assistHist) S.assistHist = d.assistHist.slice(-15);
   } catch(e) {}
 }
 function save() {
-  localStorage.setItem('phf10', JSON.stringify({
+  localStorage.setItem('phf11', JSON.stringify({
     y:S.y, m:S.m, paid:S.paid, edits:S.edits, deleted:S.deleted,
     customCards:S.customCards, extras:S.extras, budgets:S.budgets,
     budgetLimits:S.budgetLimits, receitas:S.receitas,
-    renegociated:S.renegociated, assistHist:S.assistHist
+    renegociated:S.renegociated, incomeSources:S.incomeSources,
+    assistHist:S.assistHist
   }));
 }
 
@@ -895,10 +978,7 @@ function getCards() {
 function getFixed() {
   const k = cKey();
   const base = defaultFixed(S.y, S.m);
-  if(k === '2026-4') {
-    base.push({id:'ca_abr_ov', name:'Carro (ATRASADO)', amount:2150, due:'11/Abr', dd:11, cat:'fixo', ico:'🚗', pri:1, ov:true});
-    base.push({id:'pe_abr_ov', name:'Emp. PicPay (ATRASADO)', amount:770, due:'10/Abr', dd:10, cat:'emprestimo', ico:'💸', pri:1, ov:true});
-  }
+  // Note: April's carro and picpay are already in defaultFixed; they're flagged as overdue via OVD_DATA
   const bComb = budgetSpent('combustivel');
   const bFood = budgetSpent('alimentacao');
   if(bComb > 0) base.push({id:'bm_comb_'+k, name:'⛽ Combustível ('+budgetCount('combustivel')+' regs)', amount:bComb, due:'Variável', dd:null, cat:'variavel', ico:'⛽', pri:3, _isBudget:true, _budgetCat:'combustivel'});
@@ -920,7 +1000,96 @@ function budgetItems(cat) {
 function budgetSpent(cat) { return budgetItems(cat).reduce((s,x) => s + x.amt, 0); }
 function budgetCount(cat) { return budgetItems(cat).length; }
 
-function calcs() {
+// ════════════════════════════════════════
+//  INCOME SOURCES
+// ════════════════════════════════════════
+function compareMonth(a, b) {
+  // a,b in 'yyyy-m' format
+  const [ay,am] = a.split('-').map(Number);
+  const [by,bm] = b.split('-').map(Number);
+  if(ay !== by) return ay - by;
+  return am - bm;
+}
+
+function getMonthlyIncome(y, m) {
+  const k = y + '-' + m;
+  if(S.incomeSources && S.incomeSources.length > 0) {
+    let total = 0;
+    const items = [];
+    for(const s of S.incomeSources) {
+      let applies = false;
+      if(s.type === 'oneoff') {
+        applies = (s.month === k);
+      } else {
+        const startOk = !s.startMonth || compareMonth(k, s.startMonth) >= 0;
+        const endOk   = !s.endMonth   || compareMonth(k, s.endMonth)   <= 0;
+        applies = startOk && endOk;
+      }
+      if(applies) { total += (s.amount || 0); items.push(s); }
+    }
+    return { total, items, custom:true };
+  }
+  // Fallback: hardcoded defaults
+  if(k === '2026-5') {
+    return {
+      total: 19000 + 3364 + 10000,
+      items: [
+        { id:'def_sal', name:'Salário', amount:19000, type:'recurring', icon:'💼' },
+        { id:'def_var', name:'Variável Maio', amount:3364, type:'oneoff', month:'2026-5', icon:'📈' },
+        { id:'def_nay', name:'Emp. Nay', amount:10000, type:'oneoff', month:'2026-5', icon:'🤝' },
+      ],
+      custom:false
+    };
+  }
+  return {
+    total: 19000,
+    items: [{ id:'def_sal', name:'Salário', amount:19000, type:'recurring', icon:'💼' }],
+    custom:false
+  };
+}
+
+function ensureIncomeSourcesInit() {
+  if(!S.incomeSources || S.incomeSources.length === 0) {
+    S.incomeSources = [
+      { id:'src_'+Date.now()+'_1', name:'Salário', amount:19000, type:'recurring', startMonth:'2026-1', icon:'💼' },
+      { id:'src_'+Date.now()+'_2', name:'Variável Maio', amount:3364, type:'oneoff', month:'2026-5', icon:'📈' },
+      { id:'src_'+Date.now()+'_3', name:'Empréstimo Nay', amount:10000, type:'oneoff', month:'2026-5', icon:'🤝' },
+    ];
+    save();
+  }
+}
+
+// ════════════════════════════════════════
+//  CARRYOVER (saldo acumulado dos meses anteriores)
+// ════════════════════════════════════════
+function calcMonthRaw(y, m) {
+  // Temporarily swap state, compute WITHOUT OVD (avoid double-counting in carry)
+  const sy = S.y, sm = S.m;
+  S.y = y; S.m = m;
+  const r = calcsRaw({excludeOVD: true});
+  S.y = sy; S.m = sm;
+  return r;
+}
+
+function getCarryover() {
+  // Sum of standalone balances from April 2026 to (current month - 1)
+  // Each prev month is computed WITHOUT OVD items so they're only counted in current view
+  let carry = 0;
+  let y = 2026, mn = 4;
+  let safety = 0;
+  while((y < S.y || (y === S.y && mn < S.m)) && safety < 80) {
+    const r = calcMonthRaw(y, mn);
+    carry += r.bal;
+    mn++;
+    if(mn > 12) { mn = 1; y++; }
+    safety++;
+  }
+  return carry;
+}
+
+// Standalone calc — no carryover
+function calcsRaw(opts) {
+  opts = opts || {};
   const cards = getCards();
   const fixed = getFixed();
   const extras = getExtras();
@@ -931,12 +1100,11 @@ function calcs() {
   let et=0, etTotal=0, etPaid=0;
   extras.forEach(x => { etTotal += x.amount; if(x.paid) etPaid += x.amount; else et += x.amount; });
 
-  // Overdue: only include in current period (April or May 2026)
-  const showOvd = (S.y === 2026 && S.m <= 5);
+  // Overdue: only counted in display, NOT when computing for carry-over
+  const showOvd = !opts.excludeOVD && (S.y === 2026 && S.m <= 5);
   let ov=0, ovTotal=0, ovPaid=0, ovCount=0, ovPaidCount=0;
   if(showOvd) {
-    const ovItems = getOverdue();
-    ovItems.forEach(x => {
+    getOverdue().forEach(x => {
       ovTotal += x.amount; ovCount++;
       if(x.paid) { ovPaid += x.amount; ovPaidCount++; }
       else ov += x.amount;
@@ -947,24 +1115,39 @@ function calcs() {
   const totalPaid = ctPaid + ftPaid + etPaid + ovPaid;
   const totalAll = totalPending + totalPaid;
 
-  // Income (extra cash from "receita extra")
+  // Income from sources + extra receitas from assistant
   const k = cKey();
-  let inc = 19000, extra = 0, nay = 0;
-  if(k === '2026-5') { extra = 3364; nay = 10000; }
+  const incomeData = getMonthlyIncome(S.y, S.m);
   const extraReceitas = (S.receitas && S.receitas[k]) ? S.receitas[k].reduce((s,r) => s + r.amount, 0) : 0;
-  const ti = inc + extra + nay + extraReceitas;
+  const ti = incomeData.total + extraReceitas;
 
   return {
     ct, ctTotal, ctPaid, ft, ftTotal, ftPaid, et, etTotal, etPaid,
     ov, ovTotal, ovPaid, ovCount, ovPaidCount,
     totalPending, totalPaid, totalAll, te: totalAll,
-    ti, inc, extra, nay, extraReceitas,
+    ti, incomeData, extraReceitas, carryover: 0,
     bal: ti - totalAll,
     pendingCount: cards.filter(x=>!x.paid).length + fixed.filter(x=>!x.paid).length + extras.filter(x=>!x.paid).length + (ovCount - ovPaidCount),
     paidCount:    cards.filter(x=>x.paid).length  + fixed.filter(x=>x.paid).length  + extras.filter(x=>x.paid).length + ovPaidCount,
     totalCount:   cards.length + fixed.length + extras.length + ovCount,
     showOvd
   };
+}
+
+function calcs() {
+  const raw = calcsRaw();
+  const carry = getCarryover();
+  if(carry > 0) {
+    raw.ti += carry;
+    raw.carryover = carry;
+  } else if(carry < 0) {
+    raw.te += Math.abs(carry);
+    raw.totalAll += Math.abs(carry);
+    raw.totalPending += Math.abs(carry);
+    raw.carryover = carry;
+  }
+  raw.bal = raw.ti - raw.te;
+  return raw;
 }
 
 function fmt(n) {
@@ -998,10 +1181,14 @@ function renderSidebar() {
   const d = new Date(S.y, S.m-1, 1);
   document.getElementById('sbMonth').textContent = d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
   document.getElementById('sbInc').textContent = 'R$ ' + fmt(t.ti);
-  let sub = 'Sal: R$' + fmt(t.inc);
-  if(t.extra) sub += ' +Var R$' + fmt(t.extra);
-  if(t.nay)   sub += ' +Nay R$' + fmt(t.nay);
-  document.getElementById('sbIncSub').textContent = sub;
+  let sub = '';
+  if(t.incomeData && t.incomeData.items.length > 0) {
+    sub = t.incomeData.items.slice(0,3).map(s => (s.icon||'💰') + ' R$' + fmt(s.amount)).join(' · ');
+    if(t.incomeData.items.length > 3) sub += ' +' + (t.incomeData.items.length-3);
+  }
+  if(t.extraReceitas) sub += (sub?' · ':'') + '➕ R$' + fmt(t.extraReceitas);
+  if(t.carryover > 0) sub += (sub?' · ':'') + '🔄 R$' + fmt(t.carryover) + ' carry';
+  document.getElementById('sbIncSub').textContent = sub || 'Sem fontes definidas';
   document.getElementById('sbExp').textContent = 'R$ ' + fmt(t.te);
   document.getElementById('sbExpSub').textContent = 'Pagas: R$' + fmt(t.totalPaid) + ' | Pend: R$' + fmt(t.totalPending);
   const bel = document.getElementById('sbBal');
@@ -1144,18 +1331,69 @@ function billHtml(x) {
 
 function renderOV() {
   const t = calcs();
-  const ovdMsg = t.ovCount > 0
-    ? (t.ovCount - t.ovPaidCount) + ' pendente' + ((t.ovCount-t.ovPaidCount)!==1?'s':'') + ' · ' + t.ovPaidCount + ' paga' + (t.ovPaidCount!==1?'s':'')
-    : 'Sem dívidas atrasadas ✓';
-  const mc = [
-    {cls:'inc', ico:'💰', lbl:'Receita Total',   v:'R$ ' + fmt(t.ti),                  vc:'g',  sub: (t.nay?'+R$' + fmt(t.nay) + ' Nay ':'') + (t.extra?'+R$' + fmt(t.extra) + ' var ':'') + (t.extraReceitas?'+R$'+fmt(t.extraReceitas)+' extra':'') || 'Salário base'},
-    {cls:'exp', ico:'💸', lbl:'Total Despesas',  v:'R$ ' + fmt(t.te),                  vc:'r',  sub:'Pagas: R$' + fmt(t.totalPaid) + ' · Pend: R$' + fmt(t.totalPending)},
-    {cls:'ovd', ico:'🚨', lbl:'Saldo Devedor',   v:'R$ ' + fmt(t.ov),                  vc: t.ov>0?'r':'g', sub: ovdMsg},
-    {cls:'bal', ico:'⚖️', lbl:'Saldo',           v:(t.bal<0?'-':'+')+'R$ '+fmt(t.bal), vc: t.bal>=4000?'g':t.bal>=0?'y':'r', sub: t.bal>=4000?'Meta atingida ✓':'Abaixo da meta R$4k'},
-    {cls:'rsv', ico:'🎯', lbl:'Reserva/Meta',    v: Math.round(Math.min(100,(t.bal/4000)*100))+'%', vc: t.bal>=4000?'g':t.bal>=0?'y':'r', sub:'R$ '+fmt(Math.max(0,t.bal))+' de R$ 4.000'},
+
+  // Carryover banner (shown above all cards)
+  let carryHtml = '';
+  if(t.carryover !== 0) {
+    const isPos = t.carryover > 0;
+    const clr = isPos ? 'var(--green)' : 'var(--red)';
+    const bg = isPos ? 'rgba(0,229,160,.06)' : 'rgba(255,51,85,.06)';
+    const bd = isPos ? 'rgba(0,229,160,.2)' : 'rgba(255,51,85,.2)';
+    const ico = isPos ? '📈' : '📉';
+    const txt = isPos
+      ? 'Saldo positivo dos meses anteriores: <strong>+R$ ' + fmt(t.carryover) + '</strong> somado à receita'
+      : 'Dívida acumulada dos meses anteriores: <strong>R$ ' + fmt(Math.abs(t.carryover)) + '</strong> somada às despesas';
+    carryHtml = '<div style="background:' + bg + ';border:1px solid ' + bd + ';border-radius:var(--r);padding:8px 11px;margin-bottom:13px;font-size:.74rem;color:' + clr + ';display:flex;align-items:center;gap:7px"><span style="font-size:1rem">' + ico + '</span><span>' + txt + '</span></div>';
+  }
+
+  // 3 large cards: Receita | Despesa | Saldo
+  const incomeBreakdown = (t.incomeData && t.incomeData.items.length > 0)
+    ? (t.incomeData.items.length + ' fonte' + (t.incomeData.items.length>1?'s':'') + (t.extraReceitas?' + R$'+fmt(t.extraReceitas)+' extra':''))
+    : 'Configure suas fontes';
+  const lgCards = [
+    {cls:'inc', ico:'💰', lbl:'Receita Total', v:'R$ ' + fmt(t.ti), vc:'g',
+     sub: incomeBreakdown,
+     btn:'<button onclick="event.stopPropagation();openIncomeModal()" title="Editar fontes" style="position:absolute;top:8px;right:8px;background:var(--s3);border:1px solid var(--border);border-radius:6px;width:24px;height:24px;cursor:pointer;color:var(--muted);font-size:.75rem;-webkit-tap-highlight-color:transparent">⚙</button>'},
+    {cls:'exp', ico:'💸', lbl:'Total Despesas', v:'R$ ' + fmt(t.te), vc:'r',
+     sub: t.totalCount + ' contas · ' + t.paidCount + ' pagas'},
+    {cls:'bal', ico:'⚖️', lbl:'Saldo Projetado', v:(t.bal<0?'-':'+') + 'R$ ' + fmt(t.bal),
+     vc: t.bal>=4000?'g':t.bal>=0?'y':'r',
+     sub: t.bal>=4000?'Acima da meta de R$4k ✓':t.bal>=0?'Abaixo da meta R$4k':'Negativo — atenção'},
   ];
-  document.getElementById('ovCards').innerHTML = mc.map(c => '<div class="ov-card ' + c.cls + '"><div class="ov-ico">' + c.ico + '</div><div class="ov-lbl">' + c.lbl + '</div><div class="ov-val ' + c.vc + '">' + c.v + '</div><div class="ov-sub">' + c.sub + '</div></div>').join('');
+  document.getElementById('ovCardsLg').innerHTML = lgCards.map(c =>
+    '<div class="ov-card lg ' + c.cls + '">' + (c.btn||'') +
+    '<div class="ov-ico">' + c.ico + '</div>' +
+    '<div class="ov-lbl">' + c.lbl + '</div>' +
+    '<div class="ov-val ' + c.vc + '">' + c.v + '</div>' +
+    '<div class="ov-sub">' + c.sub + '</div></div>'
+  ).join('');
+
+  // 4 small cards: Pago | Falta | Saldo Devedor | Reserva
+  const ovdMsg = t.ovCount > 0
+    ? (t.ovCount - t.ovPaidCount) + ' pendentes'
+    : 'Sem dívidas ✓';
+  const smCards = [
+    {cls:'paid-c', ico:'✓', lbl:'Total Pago', v:'R$ ' + fmt(t.totalPaid), vc:'g',
+     sub: t.paidCount + '/' + t.totalCount + ' contas'},
+    {cls:'pend-c', ico:'⏳', lbl:'Falta Pagar', v:'R$ ' + fmt(t.totalPending), vc:'y',
+     sub: t.pendingCount + ' pendentes'},
+    {cls:'ovd', ico:'🚨', lbl:'Saldo Devedor', v:'R$ ' + fmt(t.ov), vc: t.ov>0?'r':'g', sub: ovdMsg},
+    {cls:'rsv', ico:'🎯', lbl:'Reserva/Meta', v: Math.round(Math.min(100,(t.bal/4000)*100)) + '%',
+     vc: t.bal>=4000?'g':t.bal>=0?'y':'r', sub: 'R$ '+fmt(Math.max(0,t.bal))+' de R$4k'},
+  ];
+  document.getElementById('ovCardsSm').innerHTML = smCards.map(c =>
+    '<div class="ov-card sm ' + c.cls + '">' +
+    '<div class="ov-ico">' + c.ico + '</div>' +
+    '<div class="ov-lbl">' + c.lbl + '</div>' +
+    '<div class="ov-val ' + c.vc + '">' + c.v + '</div>' +
+    '<div class="ov-sub">' + c.sub + '</div></div>'
+  ).join('');
+
+  // Carryover banner is shown ABOVE the cards
+  document.getElementById('ovCarryBanner').innerHTML = carryHtml;
+
   renderProgressDonut(); renderInsights(); renderBMeters();
+
   const ovEl = document.getElementById('ovOverdue');
   if(S.y===2026 && S.m<=5) {
     const allOv = getOverdue();
@@ -1206,6 +1444,27 @@ function renderPlano() {
     if(a.pri !== b.pri) return a.pri - b.pri;
     return (a.dd||99) - (b.dd||99);
   });
+
+  // Plano summary header — shows Falta Pagar prominently
+  const planoSummary = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:11px">' +
+    '<div style="background:var(--s1);border:1px solid rgba(0,229,160,.2);border-radius:var(--r);padding:9px 11px">' +
+      '<div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">✓ Pago</div>' +
+      '<div style="font-family:var(--mono);font-size:1.05rem;font-weight:600;color:var(--green);margin-top:2px">R$ ' + fmt(t.totalPaid) + '</div>' +
+      '<div style="font-size:.6rem;color:var(--muted);margin-top:2px">' + t.paidCount + ' contas</div>' +
+    '</div>' +
+    '<div style="background:var(--s1);border:1px solid rgba(255,202,40,.25);border-radius:var(--r);padding:9px 11px">' +
+      '<div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">⏳ Falta Pagar</div>' +
+      '<div style="font-family:var(--mono);font-size:1.05rem;font-weight:600;color:var(--yellow);margin-top:2px">R$ ' + fmt(t.totalPending) + '</div>' +
+      '<div style="font-size:.6rem;color:var(--muted);margin-top:2px">' + t.pendingCount + ' contas</div>' +
+    '</div>' +
+    '<div style="background:var(--s1);border:1px solid ' + (t.bal>=0?'rgba(29,140,248,.25)':'rgba(255,51,85,.25)') + ';border-radius:var(--r);padding:9px 11px">' +
+      '<div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">⚖️ Saldo Final</div>' +
+      '<div style="font-family:var(--mono);font-size:1.05rem;font-weight:600;color:' + (t.bal>=4000?'var(--green)':t.bal>=0?'var(--yellow)':'var(--red)') + ';margin-top:2px">' + (t.bal<0?'-':'+') + 'R$ ' + fmt(Math.abs(t.bal)) + '</div>' +
+      '<div style="font-size:.6rem;color:var(--muted);margin-top:2px">' + (t.bal>=0?'positivo':'negativo') + '</div>' +
+    '</div>' +
+  '</div>';
+  document.getElementById('planoSummaryEl').innerHTML = planoSummary;
+
   const rc = ['r1','r1','r2','r2','r3','r3','r4'];
   const reasons = {fixo:'Fixo essencial',cartao:'Cartão — evitar rotativo',emprestimo:'Empréstimo — evitar negativação',variavel:'Custo variável'};
   document.getElementById('planList').innerHTML = all.slice(0,15).map((x,i) => {
@@ -1236,6 +1495,10 @@ function renderPlano() {
     const lbl = d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
     const balClr = t.bal>=4000?'var(--green)':t.bal>=0?'var(--yellow)':'var(--red)';
     strat = '<strong style="color:var(--bright)">' + lbl + ':</strong> Saldo: <strong style="color:' + balClr + '">' + (t.bal<0?'-':'+') + 'R$' + fmt(t.bal) + '</strong>. ' + (t.bal>=4000?'✅ Meta atingível!':'Ajuste gastos variáveis.');
+  }
+  if(t.carryover !== 0) {
+    const cClr = t.carryover>0?'var(--green)':'var(--red)';
+    strat += '<br><br><span style="font-size:.72rem;color:var(--muted)">📌 ' + (t.carryover>0?'Saldo positivo':'Dívida') + ' acumulado dos meses anteriores: <strong style="color:' + cClr + '">' + (t.carryover<0?'-':'+') + 'R$' + fmt(Math.abs(t.carryover)) + '</strong></span>';
   }
   document.getElementById('stratBox').innerHTML = '<strong style="color:var(--bright);font-size:.8rem">🧠 Estratégia do Mês</strong><br><br>' + strat;
 }
@@ -1588,6 +1851,139 @@ function doBmAdd() {
   save(); renderAll();
 }
 
+// ============ INCOME SOURCES MODAL ============
+function openIncomeModal() {
+  ensureIncomeSourcesInit();
+  S.editingIncomeId = null;
+  renderIncomeList();
+  document.getElementById('incomeForm').style.display = 'none';
+  document.getElementById('incomeListWrap').style.display = '';
+  document.getElementById('incomeModal').classList.add('open');
+}
+function closeIncomeModal() {
+  document.getElementById('incomeModal').classList.remove('open');
+  S.editingIncomeId = null;
+}
+function renderIncomeList() {
+  const k = cKey();
+  // Group by recurring vs oneoff for current month
+  const recurring = S.incomeSources.filter(s =>
+    s.type === 'recurring' &&
+    (!s.startMonth || compareMonth(k, s.startMonth) >= 0) &&
+    (!s.endMonth || compareMonth(k, s.endMonth) <= 0)
+  );
+  const oneoffs = S.incomeSources.filter(s => s.type === 'oneoff' && s.month === k);
+  const otherOneoffs = S.incomeSources.filter(s => s.type === 'oneoff' && s.month !== k);
+  const otherRecurring = S.incomeSources.filter(s =>
+    s.type === 'recurring' &&
+    !((!s.startMonth || compareMonth(k, s.startMonth) >= 0) && (!s.endMonth || compareMonth(k, s.endMonth) <= 0))
+  );
+  const t = calcs();
+  let html = '';
+  html += '<div style="background:rgba(0,229,160,.06);border:1px solid rgba(0,229,160,.18);border-radius:var(--r);padding:9px 11px;margin-bottom:11px">';
+  html += '<div style="font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">Total deste mês</div>';
+  html += '<div style="font-family:var(--mono);font-size:1.15rem;font-weight:600;color:var(--green)">R$ ' + fmt(t.incomeData.total) + '</div></div>';
+
+  function srcRow(s) {
+    return '<div onclick="editIncomeSource(\'' + s.id + '\')" style="display:flex;align-items:center;gap:8px;padding:9px 10px;background:var(--s1);border:1px solid var(--border);border-radius:var(--r);margin-bottom:4px;cursor:pointer">' +
+      '<div style="font-size:1.05rem">' + (s.icon || '💰') + '</div>' +
+      '<div style="flex:1;min-width:0"><div style="font-size:.78rem;font-weight:600;color:var(--bright)">' + s.name + '</div>' +
+      '<div style="font-size:.6rem;color:var(--muted)">' + (s.type === 'recurring' ? 'Mensal recorrente' : 'Pontual ' + (s.month||'')) + '</div></div>' +
+      '<div style="font-family:var(--mono);font-size:.86rem;color:var(--green);font-weight:600">R$ ' + fmt(s.amount||0) + '</div>' +
+    '</div>';
+  }
+
+  if(recurring.length > 0) {
+    html += '<div style="font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:9px 0 5px">🔁 Mensais recorrentes (ativas neste mês)</div>';
+    html += recurring.map(srcRow).join('');
+  }
+  if(oneoffs.length > 0) {
+    html += '<div style="font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:9px 0 5px">📅 Pontuais deste mês</div>';
+    html += oneoffs.map(srcRow).join('');
+  }
+  if(otherRecurring.length + otherOneoffs.length > 0) {
+    html += '<div style="font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:9px 0 5px">⏸ Outras (não ativas neste mês)</div>';
+    html += otherRecurring.concat(otherOneoffs).map(srcRow).join('');
+  }
+  if(S.incomeSources.length === 0) {
+    html += '<div class="empty">Nenhuma fonte cadastrada.</div>';
+  }
+  html += '<button class="btn btnp" style="width:100%;margin-top:11px" onclick="newIncomeSource()">+ Adicionar fonte de renda</button>';
+  document.getElementById('incomeList').innerHTML = html;
+}
+function newIncomeSource() {
+  S.editingIncomeId = null;
+  document.getElementById('incForm-ttl').textContent = '+ Nova fonte';
+  document.getElementById('incForm-name').value = '';
+  document.getElementById('incForm-amount').value = '';
+  document.getElementById('incForm-icon').value = '💼';
+  document.getElementById('incForm-type').value = 'recurring';
+  document.getElementById('incForm-month').value = cKey();
+  document.getElementById('incForm-startMonth').value = cKey();
+  toggleIncomeFields();
+  document.getElementById('incForm-deleteBtn').style.display = 'none';
+  document.getElementById('incomeForm').style.display = '';
+  document.getElementById('incomeListWrap').style.display = 'none';
+}
+function editIncomeSource(id) {
+  const s = S.incomeSources.find(x => x.id === id);
+  if(!s) return;
+  S.editingIncomeId = id;
+  document.getElementById('incForm-ttl').textContent = '✏️ Editar ' + s.name;
+  document.getElementById('incForm-name').value = s.name || '';
+  document.getElementById('incForm-amount').value = s.amount || '';
+  document.getElementById('incForm-icon').value = s.icon || '💼';
+  document.getElementById('incForm-type').value = s.type || 'recurring';
+  document.getElementById('incForm-month').value = s.month || cKey();
+  document.getElementById('incForm-startMonth').value = s.startMonth || cKey();
+  toggleIncomeFields();
+  document.getElementById('incForm-deleteBtn').style.display = '';
+  document.getElementById('incomeForm').style.display = '';
+  document.getElementById('incomeListWrap').style.display = 'none';
+}
+function toggleIncomeFields() {
+  const type = document.getElementById('incForm-type').value;
+  document.getElementById('incForm-monthRow').style.display = (type === 'oneoff') ? '' : 'none';
+  document.getElementById('incForm-startRow').style.display = (type === 'recurring') ? '' : 'none';
+}
+function backToIncomeList() {
+  document.getElementById('incomeForm').style.display = 'none';
+  document.getElementById('incomeListWrap').style.display = '';
+  S.editingIncomeId = null;
+  renderIncomeList();
+}
+function saveIncomeSource() {
+  const name = document.getElementById('incForm-name').value.trim();
+  const amount = parseFloat(document.getElementById('incForm-amount').value);
+  const icon = document.getElementById('incForm-icon').value.trim() || '💼';
+  const type = document.getElementById('incForm-type').value;
+  const month = document.getElementById('incForm-month').value;
+  const startMonth = document.getElementById('incForm-startMonth').value;
+  if(!name || isNaN(amount) || amount <= 0) { alert('Informe nome e valor!'); return; }
+  const obj = { name, amount, icon, type };
+  if(type === 'oneoff') obj.month = month;
+  else obj.startMonth = startMonth;
+  if(S.editingIncomeId) {
+    obj.id = S.editingIncomeId;
+    const idx = S.incomeSources.findIndex(s => s.id === S.editingIncomeId);
+    if(idx > -1) S.incomeSources[idx] = obj;
+  } else {
+    obj.id = 'src_' + Date.now() + '_' + Math.floor(Math.random()*1000);
+    S.incomeSources.push(obj);
+  }
+  save();
+  backToIncomeList();
+  renderAll();
+}
+function deleteIncomeSource() {
+  if(!S.editingIncomeId) return;
+  if(!confirm('Excluir esta fonte de renda?')) return;
+  S.incomeSources = S.incomeSources.filter(s => s.id !== S.editingIncomeId);
+  save();
+  backToIncomeList();
+  renderAll();
+}
+
 // ============ RENEGOTIATE MODAL ============
 function openRenegModal(id) {
   const item = OVD_DATA.find(o => o.id === id);
@@ -1855,7 +2251,7 @@ document.querySelectorAll('.fchip').forEach(btn => {
 document.addEventListener('click', e => {
   const np = document.getElementById('npPanel');
   if(np.classList.contains('open') && !np.contains(e.target) && !document.getElementById('npBtn').contains(e.target)) np.classList.remove('open');
-  ['expModal','editModal','bmLimitModal','bmModal','renegModal'].forEach(id => {
+  ['expModal','editModal','bmLimitModal','bmModal','renegModal','incomeModal'].forEach(id => {
     const m = document.getElementById(id);
     if(m && m.classList.contains('open') && e.target === m) m.classList.remove('open');
   });
