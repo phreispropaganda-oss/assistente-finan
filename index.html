@@ -954,6 +954,8 @@ function cKey() { return S.y + '-' + S.m; }
 function isNamed() { return NAMED_MONTHS.indexOf(cKey()) > -1; }
 
 function applyEdits(item) {
+  // Budget bills represent already-spent money — always treated as paid
+  if(item._isBudget) { item.paid = true; return item; }
   const e = S.edits[item.id];
   if(e) {
     if(e.name !== undefined) item.name = e.name;
@@ -1137,14 +1139,15 @@ function calcsRaw(opts) {
 function calcs() {
   const raw = calcsRaw();
   const carry = getCarryover();
+  raw.carryover = carry;
   if(carry > 0) {
+    // Positive carry: prior months surplus adds to income
     raw.ti += carry;
-    raw.carryover = carry;
   } else if(carry < 0) {
+    // Negative carry: prior months deficit adds to expenses total
+    // BUT do NOT touch totalPending/paidCount — carryover is historical, not a pending bill
     raw.te += Math.abs(carry);
     raw.totalAll += Math.abs(carry);
-    raw.totalPending += Math.abs(carry);
-    raw.carryover = carry;
   }
   raw.bal = raw.ti - raw.te;
   return raw;
@@ -1524,7 +1527,9 @@ function genSurv() {
     const incSources = incData.items;
     const nDesc = incSources.map(s => s.name + ' R$' + fmt(s.amount)).join(' + ');
     const fB = 3650 + 2150 + 625 + 150 + 129.9 + 39.9 + 610 + 1330; // base fixas
-    const loans = (mo.m <= 5 ? 770 : 0) + (mo.m >= 6 && mo.m <= 8 ? 3333 : 0);
+    // PicPay runs May 2026 → Mar 2027 (all months shown in genSurv)
+    // Emp. Nay repayment: Jun/Jul/Aug only
+    const loans = 770 + ((mo.m >= 6 && mo.m <= 8) ? 3333 : 0);
     const cards = i < cc.length ? cc[i] : 3000;
     const total = fB + loans + cards;
     const bal = inc - total;
