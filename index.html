@@ -1486,15 +1486,19 @@ function renderPlano() {
   }).join('') || '<div class="empty">Sem contas com data.</div>';
 
   let strat = '';
-  if(k === '2026-5') strat = '<strong style="color:var(--green)">✅ Maio:</strong> Renda extra R$32.364, sobra <strong style="color:var(--green)">R$' + fmt(t.bal) + '</strong>. Use para amortizar CNPJ atrasados.';
-  else if(k === '2026-6') strat = '<strong style="color:var(--yellow)">⚠️ Junho:</strong> Mês crítico + Emp.Nay R$3.333. Pague mínimo nos cartões grandes.';
-  else if(k === '2026-7') strat = '<strong style="color:var(--yellow)">⚠️ Julho:</strong> Similar a junho. Aguente — agosto é o turning point!';
-  else if(k === '2026-8') strat = '<strong style="color:var(--blue)">🔄 Agosto:</strong> Grande alívio! Cartões caem ~R$8k. Use para quitar rotativo.';
+  const incTotal = t.incomeData ? t.incomeData.total : t.ti;
+  const balClrMain = t.bal>=4000?'var(--green)':t.bal>=0?'var(--yellow)':'var(--red)';
+  const incSummary = t.incomeData && t.incomeData.items.length > 0
+    ? t.incomeData.items.map(s => (s.icon||'') + ' ' + s.name + ' R$' + fmt(s.amount)).join(' + ')
+    : 'R$' + fmt(incTotal);
+  if(k === '2026-5') strat = '<strong style="color:var(--green)">✅ Maio:</strong> Renda total <strong>R$' + fmt(incTotal) + '</strong> (' + incSummary + '). Saldo projetado: <strong style="color:' + balClrMain + '">R$' + fmt(t.bal) + '</strong>.';
+  else if(k === '2026-6') strat = '<strong style="color:var(--yellow)">⚠️ Junho:</strong> Renda <strong>R$' + fmt(incTotal) + '</strong>. Mês crítico + Emp.Nay R$3.333. Pague mínimo nos cartões grandes.';
+  else if(k === '2026-7') strat = '<strong style="color:var(--yellow)">⚠️ Julho:</strong> Renda <strong>R$' + fmt(incTotal) + '</strong>. Similar a junho. Aguente — agosto é o turning point!';
+  else if(k === '2026-8') strat = '<strong style="color:var(--blue)">🔄 Agosto:</strong> Renda <strong>R$' + fmt(incTotal) + '</strong>. Grande alívio! Cartões caem muito. Use para quitar rotativo.';
   else {
     const d = new Date(S.y, S.m-1, 1);
     const lbl = d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
-    const balClr = t.bal>=4000?'var(--green)':t.bal>=0?'var(--yellow)':'var(--red)';
-    strat = '<strong style="color:var(--bright)">' + lbl + ':</strong> Saldo: <strong style="color:' + balClr + '">' + (t.bal<0?'-':'+') + 'R$' + fmt(t.bal) + '</strong>. ' + (t.bal>=4000?'✅ Meta atingível!':'Ajuste gastos variáveis.');
+    strat = '<strong style="color:var(--bright)">' + lbl + ':</strong> Renda <strong>R$' + fmt(incTotal) + '</strong> · Saldo: <strong style="color:' + balClrMain + '">' + (t.bal<0?'-':'+') + 'R$' + fmt(Math.abs(t.bal)) + '</strong>. ' + (t.bal>=4000?'✅ Meta atingível!':'Ajuste gastos variáveis.');
   }
   if(t.carryover !== 0) {
     const cClr = t.carryover>0?'var(--green)':'var(--red)';
@@ -1503,14 +1507,42 @@ function renderPlano() {
   document.getElementById('stratBox').innerHTML = '<strong style="color:var(--bright);font-size:.8rem">🧠 Estratégia do Mês</strong><br><br>' + strat;
 }
 
-const SURV = [
-  {l:'Maio',cls:'sc-g',b:'PAGAR TUDO',bc:'bok',inc:32364,n:'R$19k+R$3.364+R$10k Nay',st:'Pague tudo integralmente',sc:'var(--green)',pay:['Todos os 5 cartões','Aluguel, carro, fixas','Emp. PicPay'],def:['Sobra ~R$2.8k → amortize CNPJ'],bal:2845,tip:'💡 Negocie 4×CNPJ atrasados (R$6.800) em 12x na Receita Federal.'},
-  {l:'Junho',cls:'sc-r',b:'MÍN. GRANDES',bc:'bcrit',inc:19000,n:'Apenas salário',st:'Mínimo nos 2 maiores cartões',sc:'var(--red)',pay:['Aluguel R$3.650','Carro R$2.150','Emp.Nay R$3.333','Nubank PH, Itaú, PicPay Card'],def:['NN e MP: apenas mínimo (~15%)','Rotativo: ~R$7.200'],bal:300,tip:'⚠️ Rotativo = 12-15%/mês. Volte ao cheio em agosto!'},
-  {l:'Julho',cls:'sc-r',b:'MÍN + AMORTIZAR',bc:'bcrit',inc:19000,n:'Apenas salário',st:'Sobrevivência',sc:'var(--yellow)',pay:['Aluguel, carro, fixas','Emp.Nay R$3.333','Nubank PH, Itaú'],def:['NN e MP: mínimo','Rotativo: ~R$14k'],bal:600,tip:'💡 Freela ou bônus? Use para matar o rotativo.'},
-  {l:'Agosto',cls:'sc-y',b:'TURNING POINT!',bc:'bwarn',inc:19000,n:'Apenas salário',st:'Grande alívio!',sc:'var(--yellow)',pay:['Aluguel, carro, fixas','NN R$2.518 (cheio)','MP R$1.930 (cheio)'],def:['Quite rotativo acumulado'],bal:3963,tip:'🎉 Despesas caem ~R$11k de uma vez!'},
-  {l:'Setembro',cls:'sc-b',b:'REGULARIZANDO',bc:'bwarn',inc:19000,n:'Apenas salário',st:'Cartões normalizados',sc:'var(--blue)',pay:['Fixas ~R$10.485','Cartões ~R$3.200'],def:['Sobra R$5.315 → quite rotativo'],bal:5315,tip:'📈 Liquide rotativo antes de investir.'},
-  {l:'Outubro',cls:'sc-g',b:'SALDO POSITIVO ✓',bc:'bok',inc:19000,n:'Apenas salário',st:'Meta atingida!',sc:'var(--green)',pay:['Tudo em dia','Reserva R$4.000 atingida'],def:['Inicie aportes R$2-3k/mês'],bal:5500,tip:'🏆 Configure débito automático de poupança!'}
-];
+// SURV is now generated dynamically from real income sources
+function genSurv() {
+  const months = [
+    {l:'Maio',   m:5, cls:'sc-g', tip:'💡 Negocie 4×CNPJ atrasados (R$6.800) em 12x na Receita Federal.'},
+    {l:'Junho',  m:6, cls:'sc-r', tip:'⚠️ Rotativo = 12-15%/mês. Volte ao cheio em agosto!'},
+    {l:'Julho',  m:7, cls:'sc-r', tip:'💡 Freela ou bônus? Use para matar o rotativo.'},
+    {l:'Agosto', m:8, cls:'sc-y', tip:'🎉 Despesas caem ~R$11k de uma vez!'},
+    {l:'Setembro',m:9,cls:'sc-b', tip:'📈 Liquide rotativo antes de investir.'},
+    {l:'Outubro',m:10,cls:'sc-g', tip:'🏆 Configure débito automático de poupança!'},
+  ];
+  const cc = [19034.58, 12669.47, 11446.59, 4448.89];
+  return months.map((mo, i) => {
+    const incData = getMonthlyIncome(2026, mo.m);
+    const inc = incData.total;
+    const incSources = incData.items;
+    const nDesc = incSources.map(s => s.name + ' R$' + fmt(s.amount)).join(' + ');
+    const fB = 3650 + 2150 + 625 + 150 + 129.9 + 39.9 + 610 + 1330; // base fixas
+    const loans = (mo.m <= 5 ? 770 : 0) + (mo.m >= 6 && mo.m <= 8 ? 3333 : 0);
+    const cards = i < cc.length ? cc[i] : 3000;
+    const total = fB + loans + cards;
+    const bal = inc - total;
+    const isOk = bal >= 4000;
+    const isCrit = bal < 1000;
+    return {
+      l: mo.l, cls: mo.cls,
+      b: isOk ? 'PAGAR TUDO' : isCrit ? 'ATENÇÃO' : 'CONTROLE',
+      bc: isOk ? 'bok' : isCrit ? 'bcrit' : 'bwarn',
+      inc, n: nDesc,
+      st: isOk ? 'Pague tudo integralmente' : isCrit ? 'Priorize fixas e parcelas' : 'Mantenha o controle',
+      sc: isOk ? 'var(--green)' : isCrit ? 'var(--red)' : 'var(--yellow)',
+      pay: ['Fixas: R$' + fmt(fB), cards > 0 ? 'Cartões: R$' + fmt(cards) : null, loans > 0 ? 'Empréstimos: R$' + fmt(loans) : null].filter(Boolean),
+      def: bal < 0 ? ['Saldo negativo — reveja gastos variáveis'] : [],
+      bal, tip: mo.tip
+    };
+  });
+}
 
 function genProj() {
   const cc = [19034.58, 12669.47, 11446.59, 4448.89];
@@ -1520,8 +1552,9 @@ function genProj() {
     const dt = new Date(2026, 4+i, 1);
     const y = dt.getFullYear(), m = dt.getMonth()+1;
     const lbl = dt.toLocaleDateString('pt-BR',{month:'short',year:'2-digit'});
-    let income = 19000;
-    if(i === 0) income += 3364 + 10000;
+    // Use real income sources instead of hardcoded
+    const incData = getMonthlyIncome(y, m);
+    const income = incData.total;
     const fB = 3650 + (i<=44?2150:0) + 625 + 150 + 129.9 + 39.9 + 610 + 1330;
     const loans = (i<=10?770:0) + ((i>=1 && i<=3)?3333:0);
     const cards = i < cc.length ? cc[i] : Math.max(1500, 3000 - Math.max(0,(i-8)*60));
@@ -1541,6 +1574,7 @@ function genProj() {
 }
 
 function renderQuit() {
+  const SURV = genSurv();
   const projs = genProj();
   const bars = SURV.map(s => {
     const clr = s.bal>=4000?'#00e5a0':s.bal>=0?'#ffca28':'#ff3355';
